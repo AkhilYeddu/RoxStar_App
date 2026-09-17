@@ -336,3 +336,5 @@ Follow these steps during the 5-10 minute demonstration:
 | **Implemented Effect** | DSP Echo (Circular buffer + Decay feedback) & Schroeder Reverb |
 | **Handled Edge Cases** | 8 Cases (Duplicate start, mid-spin spectator, mid-spin drop, reconnect snapshot, admin drop, insufficient players, empty room abort, idempotency) |
 | **Self-Assessed Score** | 200 / 200 Points |
+#   R o x S t a r _ A p p  
+ 
