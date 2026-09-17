@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # MongoDB Database Service
+  mongodb:
+    image: mongo:7.0
+    container_name: roxstar_mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: roxstar_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - roxstar_net
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Node.js Real-Time Backend Service
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: roxstar_backend
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/roxstar_db
+      - CORS_ORIGIN=*
+      - LOG_LEVEL=info
+      - SPIN_INTERVAL_MS=5000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - roxstar_net
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:4000/api/health']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  roxstar_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
