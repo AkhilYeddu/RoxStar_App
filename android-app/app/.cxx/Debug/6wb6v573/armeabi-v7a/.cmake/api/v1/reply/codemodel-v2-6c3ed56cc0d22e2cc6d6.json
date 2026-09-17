@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "roxstar_audio_native::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-roxstar_audio_native-Debug-fcf7da3f25d740d8651a.json",
+					"jsonFile" : "target-roxstar_audio_native-Debug-811c1728dffab97c9b63.json",
 					"name" : "roxstar_audio_native",
 					"projectIndex" : 0
 				}
@@ -49,7 +49,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/x86_64",
+		"build" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/armeabi-v7a",
 		"source" : "C:/Users/akhil/Desktop/Assignment/android-app/app/src/main/cpp"
 	},
 	"version" : 

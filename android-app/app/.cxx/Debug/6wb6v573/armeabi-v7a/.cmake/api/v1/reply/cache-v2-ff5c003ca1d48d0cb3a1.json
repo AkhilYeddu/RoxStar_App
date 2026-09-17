@@ -11,7 +11,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64"
+			"value" : "armeabi-v7a"
 		},
 		{
 			"name" : "ANDROID_NDK",
@@ -75,7 +75,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64"
+			"value" : "armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_ANDROID_NDK",
@@ -163,7 +163,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/x86_64"
+			"value" : "c:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -635,7 +635,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\.cxx\\Debug\\6wb6v573\\prefab\\x86_64\\prefab"
+			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\.cxx\\Debug\\6wb6v573\\prefab\\armeabi-v7a\\prefab"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -731,7 +731,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\build\\intermediates\\cxx\\Debug\\6wb6v573\\obj\\x86_64"
+			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\build\\intermediates\\cxx\\Debug\\6wb6v573\\obj\\armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1003,7 +1003,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\build\\intermediates\\cxx\\Debug\\6wb6v573\\obj\\x86_64"
+			"value" : "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\build\\intermediates\\cxx\\Debug\\6wb6v573\\obj\\armeabi-v7a"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1275,7 +1275,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/prefab/x86_64/prefab/lib/x86_64-linux-android/cmake/oboe"
+			"value" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/prefab/armeabi-v7a/prefab/lib/arm-linux-androideabi/cmake/oboe"
 		},
 		{
 			"name" : "roxstar_audio_native_BINARY_DIR",
@@ -1287,7 +1287,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/x86_64"
+			"value" : "C:/Users/akhil/Desktop/Assignment/android-app/app/.cxx/Debug/6wb6v573/armeabi-v7a"
 		},
 		{
 			"name" : "roxstar_audio_native_IS_TOP_LEVEL",

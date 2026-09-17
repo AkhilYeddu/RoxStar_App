@@ -20,6 +20,8 @@ add_library(
     ${NATIVE_AUDIO_DIR}/src/AudioEngine.cpp
     ${NATIVE_AUDIO_DIR}/src/effects/EchoEffect.cpp
     ${NATIVE_AUDIO_DIR}/src/effects/ReverbEffect.cpp
+    ${NATIVE_AUDIO_DIR}/src/effects/HeliumEffect.cpp
+    ${NATIVE_AUDIO_DIR}/src/effects/DemonicEffect.cpp
     ${NATIVE_AUDIO_DIR}/src/wav/WavWriter.cpp
 )
 

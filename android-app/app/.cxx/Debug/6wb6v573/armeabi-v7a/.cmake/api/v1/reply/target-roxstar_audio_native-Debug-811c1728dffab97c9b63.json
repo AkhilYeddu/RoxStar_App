@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "C:/Users/akhil/Desktop/Assignment/android-app/app/build/intermediates/cxx/Debug/6wb6v573/obj/x86_64/libroxstar_audio_native.so"
+			"path" : "C:/Users/akhil/Desktop/Assignment/android-app/app/build/intermediates/cxx/Debug/6wb6v573/obj/armeabi-v7a/libroxstar_audio_native.so"
 		}
 	],
 	"backtrace" : 1,
@@ -32,7 +32,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 26,
+				"line" : 28,
 				"parent" : 0
 			},
 			{
@@ -49,7 +49,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++20 -fno-limit-debug-info  -fPIC"
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -std=c++20 -fno-limit-debug-info  -fPIC"
 				},
 				{
 					"fragment" : "-std=c++20"
@@ -88,7 +88,9 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5,
+				6
 			],
 			"sysroot" : 
 			{
@@ -107,7 +109,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "C:\\Users\\akhil\\.gradle\\caches\\8.13\\transforms\\79359ee50a416191f1d35b8d0bf68adc\\transformed\\oboe-1.8.0\\prefab\\modules\\oboe\\libs\\android.x86_64\\liboboe.so",
+				"fragment" : "C:\\Users\\akhil\\.gradle\\caches\\8.13\\transforms\\79359ee50a416191f1d35b8d0bf68adc\\transformed\\oboe-1.8.0\\prefab\\modules\\oboe\\libs\\android.armeabi-v7a\\liboboe.so",
 				"role" : "libraries"
 			},
 			{
@@ -148,7 +150,9 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5,
+				6
 			]
 		}
 	],
@@ -176,6 +180,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/ReverbEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/HeliumEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/DemonicEffect.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

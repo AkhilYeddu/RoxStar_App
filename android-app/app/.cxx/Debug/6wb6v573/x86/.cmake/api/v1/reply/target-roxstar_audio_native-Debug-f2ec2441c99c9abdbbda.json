@@ -32,7 +32,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 26,
+				"line" : 28,
 				"parent" : 0
 			},
 			{
@@ -88,7 +88,9 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5,
+				6
 			],
 			"sysroot" : 
 			{
@@ -148,7 +150,9 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5,
+				6
 			]
 		}
 	],
@@ -176,6 +180,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/ReverbEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/HeliumEffect.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "C:/Users/akhil/Desktop/Assignment/native-audio/src/effects/DemonicEffect.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
