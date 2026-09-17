@@ -16,6 +16,7 @@ const createDraftSchema = z.object({
 
 router.post('/', validate(createDraftSchema), draftController.createDraft);
 router.get('/user/:userId', draftController.getUserDrafts);
+router.patch('/:draftId/rename', draftController.renameDraft);
 router.delete('/:draftId', draftController.deleteDraft);
 
 module.exports = router;

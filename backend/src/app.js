@@ -6,12 +6,17 @@ const spinRoutes = require('./routes/spinRoutes');
 const draftRoutes = require('./routes/draftRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 
+const path = require('path');
+
 const app = express();
 
 // Global Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve interactive Visual Studio & Simulator
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Request trace logger
 app.use((req, res, next) => {
@@ -27,20 +32,9 @@ app.use('/api/rooms', spinRoutes);
 app.use('/api', spinRoutes); // Direct access for /api/spins/:spinId
 app.use('/api/drafts', draftRoutes);
 
-// Root Welcome endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({
-    name: 'RoxStar Unified Real-Time Service',
-    status: 'ACTIVE',
-    version: '1.0.0',
-    docs: '/api-docs',
-    endpoints: {
-      health: '/api/health',
-      ready: '/api/ready',
-      rooms: '/api/rooms',
-      drafts: '/api/drafts',
-    },
-  });
+// Explicit route for app dashboard
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // 404 Route Handler

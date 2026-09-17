@@ -84,6 +84,70 @@ const setupSocketHandlers = (io) => {
       }
     });
 
+    // Client joins a room dynamically
+    socket.on('join_room', async ({ roomId, userId, username }) => {
+      try {
+        if (!roomId || !userId) {
+          return socket.emit('error_event', { message: 'roomId and userId are required to join room' });
+        }
+        if (socket.roomId && socket.roomId !== roomId) {
+          socket.leave(socket.roomId);
+        }
+        socket.join(roomId);
+        socket.roomId = roomId;
+        socket.userId = userId;
+
+        const joinResult = await roomService.joinRoom({
+          roomId,
+          userId,
+          username: username || `User_${userId.slice(0, 6)}`,
+          socketId: socket.id,
+        });
+
+        const memberUsername = username || (joinResult.joinedMember && joinResult.joinedMember.username) || `User_${userId.slice(0, 6)}`;
+        const memberRole = (joinResult.joinedMember && joinResult.joinedMember.role) || 'MEMBER';
+
+        socket.to(roomId).emit('user_joined', {
+          userId,
+          username: memberUsername,
+          role: memberRole,
+          connectionStatus: 'CONNECTED',
+        });
+
+        const roomState = await roomService.getRoomDetails(roomId);
+        socket.emit('room_state', roomState);
+
+        const activeSpinSnapshot = await spinEngine.getCurrentSpinSnapshot(roomId);
+        if (activeSpinSnapshot && activeSpinSnapshot.status === 'RUNNING') {
+          socket.emit('spin_started', activeSpinSnapshot);
+        }
+      } catch (err) {
+        logger.error({ err: err.message, roomId, userId }, 'Error joining room dynamically');
+        socket.emit('error_event', { message: err.message });
+      }
+    });
+
+    // Client leaves a room explicitly
+    socket.on('leave_room', async (data = {}) => {
+      try {
+        const targetRoomId = data.roomId || socket.roomId;
+        const targetUserId = data.userId || socket.userId;
+        if (targetRoomId && targetUserId) {
+          await roomService.leaveRoom({ roomId: targetRoomId, userId: targetUserId });
+          socket.leave(targetRoomId);
+          io.to(targetRoomId).emit('user_left', {
+            userId: targetUserId,
+            reason: 'leave',
+          });
+          if (socket.roomId === targetRoomId) {
+            socket.roomId = null;
+          }
+        }
+      } catch (err) {
+        socket.emit('error_event', { message: err.message });
+      }
+    });
+
     // Handle Client Disconnect
     socket.on('disconnect', async (reason) => {
       logger.info({ socketId: socket.id, userId: socket.userId, roomId: socket.roomId, reason }, 'Client disconnected');

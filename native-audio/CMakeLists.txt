@@ -19,5 +19,5 @@ add_library(roxstar_audio STATIC ${AUDIO_SOURCES})
 
 if (ANDROID)
     find_package(oboe REQUIRED CONFIG)
-    target_link_libraries(roxstar_audio PUBLIC oboe::oboe log)
+    target_link_libraries(roxstar_audio PUBLIC oboe::oboe log c++_shared)
 endif()

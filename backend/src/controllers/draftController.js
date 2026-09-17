@@ -40,6 +40,27 @@ class DraftController {
     }
   }
 
+  async renameDraft(req, res, next) {
+    try {
+      const { draftId } = req.params;
+      const { title } = req.body;
+      if (!title || !title.trim()) {
+        return res.status(400).json({ success: false, message: 'Title is required' });
+      }
+      const draft = await Draft.findOneAndUpdate(
+        { draftId },
+        { title: title.trim() },
+        { new: true }
+      );
+      if (!draft) {
+        return res.status(404).json({ success: false, message: `Draft '${draftId}' not found` });
+      }
+      res.status(200).json({ success: true, data: draft, message: 'Draft renamed successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async deleteDraft(req, res, next) {
     try {
       const { draftId } = req.params;

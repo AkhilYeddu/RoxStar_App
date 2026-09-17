@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const path = require('path');
+const mongoose = require(path.resolve(__dirname, '../../backend/node_modules/mongoose'));
 const config = require('../../backend/src/config/config');
 const User = require('../../backend/src/models/User');
 const Room = require('../../backend/src/models/Room');

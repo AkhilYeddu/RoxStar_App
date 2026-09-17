@@ -12,7 +12,7 @@ const connectDB = async (uri = config.mongoUri) => {
 
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 3000,
     });
     isConnected = true;
     logger.info(`MongoDB connected successfully: ${conn.connection.host}/${conn.connection.name}`);
@@ -28,8 +28,19 @@ const connectDB = async (uri = config.mongoUri) => {
 
     return conn;
   } catch (error) {
-    logger.error({ error: error.message }, 'MongoDB connection failure');
-    throw error;
+    logger.warn(`Could not connect to external MongoDB at ${uri}. Falling back to embedded MongoMemoryServer for development...`);
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongod = await MongoMemoryServer.create();
+      const memUri = mongod.getUri();
+      const conn = await mongoose.connect(memUri);
+      isConnected = true;
+      logger.info(`Embedded MongoDB running at ${memUri}`);
+      return conn;
+    } catch (memError) {
+      logger.error({ error: memError.message }, 'Failed to start embedded MongoDB');
+      throw memError;
+    }
   }
 };
 
