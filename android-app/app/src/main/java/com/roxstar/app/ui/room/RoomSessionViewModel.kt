@@ -305,13 +305,25 @@ class RoomSessionViewModel(
         }
 
         viewModelScope.launch {
+            _roomState.value = _roomState.value.copy(isLoading = true, errorMessage = null)
             try {
+                // Read file on IO thread — WAV files can be several MB
+                val audioBase64 = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        val file = java.io.File(draft.filePath)
+                        if (file.exists() && file.length() > 0) {
+                            android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
+                        } else null
+                    } catch (_: Exception) { null }
+                }
+
                 val req = ShareDraftRequest(
                     userId = _roomState.value.userId,
                     draftId = draft.id,
                     title = draft.title,
                     durationMs = draft.durationMs,
-                    effectApplied = draft.effectApplied
+                    effectApplied = draft.effectApplied,
+                    audioBase64 = audioBase64
                 )
                 val response = apiService.shareDraft(room.id, req)
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -322,20 +334,30 @@ class RoomSessionViewModel(
                             updatedDrafts.add(0, draft)
                         }
                         _roomState.value = _roomState.value.copy(
+                            isLoading = false,
                             currentRoom = current.copy(sharedDrafts = updatedDrafts),
                             infoMessage = "Draft '${draft.title}' shared with room!"
                         )
                     } else {
                         _roomState.value = _roomState.value.copy(
+                            isLoading = false,
                             infoMessage = "Draft '${draft.title}' shared with room!"
                         )
                     }
                 } else {
-                    val errMsg = response.body()?.message ?: "Failed to share draft"
-                    _roomState.value = _roomState.value.copy(errorMessage = errMsg)
+                    val errMsg = response.body()?.message ?: "Server rejected share request (${response.code()})"
+                    _roomState.value = _roomState.value.copy(isLoading = false, errorMessage = errMsg)
                 }
+            } catch (e: java.net.SocketTimeoutException) {
+                _roomState.value = _roomState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Upload timed out — check your connection and try again"
+                )
             } catch (e: Exception) {
-                _roomState.value = _roomState.value.copy(errorMessage = e.localizedMessage ?: "Failed to share draft")
+                _roomState.value = _roomState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.localizedMessage ?: "Failed to share draft"
+                )
             }
         }
     }

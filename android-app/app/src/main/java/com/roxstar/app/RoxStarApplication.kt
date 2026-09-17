@@ -41,8 +41,9 @@ class RoxStarApplication : Application() {
 
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(logging)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)   // large base64 audio upload can take time
+            .writeTimeout(90, TimeUnit.SECONDS)  // must be long enough to push entire WAV payload
             .build()
 
         val retrofit = Retrofit.Builder()

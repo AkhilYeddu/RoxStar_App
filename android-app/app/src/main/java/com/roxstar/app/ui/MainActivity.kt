@@ -183,12 +183,18 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 state.errorMessage?.let {
-                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
                     roomSessionViewModel.clearMessages()
                 }
                 state.infoMessage?.let {
                     Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
                     roomSessionViewModel.clearMessages()
+                }
+
+                // Show upload progress indicator in the status bar
+                if (state.isLoading) {
+                    binding.tvConnectionStatus.text = "⏳ Uploading draft..."
+                    binding.tvConnectionStatus.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
                 }
             }
         }
