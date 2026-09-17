@@ -9,7 +9,7 @@ const createDraftSchema = z.object({
     userId: z.string().min(1, 'userId is required'),
     title: z.string().min(1, 'title is required'),
     durationMs: z.number().nonnegative(),
-    effectApplied: z.enum(['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT']).optional(),
+    effectApplied: z.enum(['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT', 'HELIUM', 'DEMONIC']).optional(),
     fileUrl: z.string().optional(),
   }),
 });

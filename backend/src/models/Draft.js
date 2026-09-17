@@ -29,7 +29,7 @@ const draftSchema = new mongoose.Schema(
     },
     effectApplied: {
       type: String,
-      enum: ['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT'],
+      enum: ['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT', 'HELIUM', 'DEMONIC'],
       default: 'NONE',
     },
     sharedInRooms: [

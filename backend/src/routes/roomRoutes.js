@@ -41,7 +41,7 @@ const shareDraftSchema = z.object({
     draftId: z.string().min(1),
     title: z.string().optional(),
     durationMs: z.number().nonnegative().optional(),
-    effectApplied: z.enum(['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT']).optional(),
+    effectApplied: z.enum(['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT', 'HELIUM', 'DEMONIC']).optional(),
     fileUrl: z.string().optional(),
   }),
 });
