@@ -315,24 +315,87 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:id="@+id/tvSpinStatus"
-                        android:layout_width="wrap_content"
+                    <!-- Status banner + countdown row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="🎡 Spin Wheel Status: Ready"
-                        android:textColor="#F59E0B"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="6dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
 
-                    <TextView
-                        android:id="@+id/tvSpinTimer"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:id="@+id/tvSpinStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🎡 Spin Wheel Status: Ready"
+                            android:textColor="#F59E0B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSpinTimer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏱️ --"
+                            android:textColor="#EC4899"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- The visual spin wheel -->
+                    <com.roxstar.app.ui.spin.SpinWheelView
+                        android:id="@+id/spinWheelView"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="⏱️ Countdown: --"
-                        android:textColor="#EC4899"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginVertical="8dp" />
+
+                    <!-- Winner overlay card (GONE by default) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cvWinnerCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="8dp"
+                        android:visibility="gone"
+                        app:cardBackgroundColor="#1A2B1A"
+                        app:cardCornerRadius="12dp"
+                        app:strokeColor="#10B981"
+                        app:strokeWidth="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🏆 WINNER! 🏆"
+                                android:textColor="#F59E0B"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="6dp" />
+
+                            <TextView
+                                android:id="@+id/tvWinnerName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="—"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🎊 Congratulations! 🎊"
+                                android:textColor="#10B981"
+                                android:textSize="13sp"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <TextView
                         android:id="@+id/tvSurvivors"

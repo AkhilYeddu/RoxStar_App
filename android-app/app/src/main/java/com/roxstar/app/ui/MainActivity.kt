@@ -3,7 +3,6 @@ package com.roxstar.app.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -33,6 +32,9 @@ class MainActivity : AppCompatActivity() {
 
     private var currentUserId: String = UUID.randomUUID().toString().take(6)
     private var currentUsername: String = "User_$currentUserId"
+
+    /** Tracks the survivor list from the last spin event so we can detect a new elimination round. */
+    private var prevSurvivorCount = -1
 
     private val recordAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -157,9 +159,19 @@ class MainActivity : AppCompatActivity() {
 
                 if (state.currentRoom != null) {
                     val room = state.currentRoom
-                    binding.tvActiveRoomInfo.text = "🟢 Room: ${room.name} (${room.roomId})\nMembers: ${room.participants.size}/${room.maxParticipants} | Role: ${if (state.isOwner) "Owner 👑" else "Member"}"
+                    binding.tvActiveRoomInfo.text = "🟢 Room: ${room.name} (${room.id})\nMembers: ${room.participants.size} | Role: ${if (state.isOwner) "Owner 👑" else "Member"}"
                     binding.btnStartSpin.isEnabled = state.isOwner
+
+                    // Pre-populate the wheel with current room members (before spin starts)
+                    if (!roomSessionViewModel.spinState.value.isSpinRunning &&
+                        roomSessionViewModel.spinState.value.winnerId == null) {
+                        val names = room.participants.map { it.username }
+                        if (names.isNotEmpty()) {
+                            binding.spinWheelView.setSegments(names)
+                        }
+                    }
                 } else {
+
                     binding.tvActiveRoomInfo.text = "Not in any room. Enter room ID/name above to join."
                     binding.btnStartSpin.isEnabled = false
                 }
@@ -177,9 +189,48 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             roomSessionViewModel.spinState.collectLatest { state ->
-                binding.tvSpinStatus.text = "🎡 Spin Status: ${state.statusBanner}"
-                binding.tvSpinTimer.text = "⏱️ Countdown: ${state.countdownSeconds}s"
-                binding.tvSurvivors.text = "👥 Active Contenders (${state.activeSurvivors.size}): ${state.activeSurvivors.joinToString(", ")}"
+                binding.tvSpinStatus.text = "🎡 ${state.statusBanner}"
+                binding.tvSpinTimer.text = if (state.isSpinRunning) "${state.countdownSeconds}s" else "--"
+                binding.tvSurvivors.text =
+                    "👥 Contenders (${state.activeSurvivors.size}): ${state.activeSurvivors.joinToString(", ")}"
+
+                val wheel = binding.spinWheelView
+
+                when {
+                    // ── Spin just started (first round) ──────────────────────
+                    state.isSpinRunning && prevSurvivorCount == -1 -> {
+                        prevSurvivorCount = state.activeSurvivors.size
+                        wheel.setSegments(state.activeSurvivors)
+                        wheel.spinToEliminate(5000L) { _ -> /* server sends elimination event */ }
+                        binding.cvWinnerCard.visibility = View.GONE
+                    }
+
+                    // ── A new elimination round (survivor count dropped) ──────
+                    state.isSpinRunning && state.activeSurvivors.size < prevSurvivorCount -> {
+                        prevSurvivorCount = state.activeSurvivors.size
+                        wheel.setSegments(state.activeSurvivors)
+                        if (state.activeSurvivors.size > 1) {
+                            wheel.spinToEliminate(4000L) { _ -> /* server will send next event */ }
+                        }
+                    }
+
+                    // ── Winner announced ─────────────────────────────────────
+                    !state.isSpinRunning && state.winnerId != null -> {
+                        prevSurvivorCount = -1
+                        // Show winner card
+                        binding.tvWinnerName.text = state.winnerId
+                        binding.cvWinnerCard.visibility = View.VISIBLE
+                        binding.cvWinnerCard.animate().alpha(1f).scaleX(1f).scaleY(1f)
+                            .setDuration(400).start()
+                    }
+
+                    // ── Spin not running and no winner (reset state) ──────────
+                    !state.isSpinRunning && state.winnerId == null -> {
+                        prevSurvivorCount = -1
+                        wheel.reset()
+                        binding.cvWinnerCard.visibility = View.GONE
+                    }
+                }
 
                 state.errorMessage?.let {
                     Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
