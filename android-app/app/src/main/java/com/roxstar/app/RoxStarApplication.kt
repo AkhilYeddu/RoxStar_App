@@ -24,7 +24,7 @@ class RoxStarApplication : Application() {
     // ── Server URL ────────────────────────────────────────────────────────────
     // Android Emulator  → 10.0.2.2 is the host-machine loopback alias
     // Physical Device   → use your machine's LAN IP: 172.20.197.141
-    var serverBaseUrl: String = "http://10.0.2.2:4000/" // default: emulator
+    var serverBaseUrl: String = "https://roxstar-app.azurewebsites.net/" // default: emulator
 
     override fun onCreate() {
         super.onCreate()

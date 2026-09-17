@@ -12,6 +12,7 @@ yarn-error.log*
 
 # Android / Gradle
 .gradle/
+.cxx/
 build/
 app/build/
 *.iml
@@ -20,6 +21,9 @@ local.properties
 .DS_Store
 *.apk
 *.aab
+*.zip
+cls
+powershell
 
 # Native / C++
 CMakeCache.txt

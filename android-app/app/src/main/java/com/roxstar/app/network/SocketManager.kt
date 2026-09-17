@@ -81,57 +81,80 @@ class SocketManager {
 
                 on("draft_shared") { args ->
                     if (args.isNotEmpty()) {
-                        val json = JSONObject(args[0].toString())
-                        val draft = gson.fromJson(json.optJSONObject("draft")?.toString() ?: "{}", Draft::class.java)
-                        val sharedBy = json.optString("sharedBy")
-                        _eventsFlow.tryEmit(SocketEvent.DraftShared(draft, sharedBy))
+                        try {
+                            val json = JSONObject(args[0].toString())
+                            val draftObj = json.optJSONObject("draft")
+                            val draft = if (draftObj != null) {
+                                Draft(
+                                    id = draftObj.optString("id", draftObj.optString("draftId", "")),
+                                    title = draftObj.optString("title", "Voice Draft"),
+                                    filePath = draftObj.optString("fileUrl", draftObj.optString("filePath", "")),
+                                    durationMs = draftObj.optLong("durationMs", 0L),
+                                    effectApplied = draftObj.optString("effectApplied", "NONE")
+                                )
+                            } else {
+                                gson.fromJson(json.toString(), Draft::class.java)
+                            }
+                            val sharedBy = json.optString("sharedBy", "Anonymous")
+                            _eventsFlow.tryEmit(SocketEvent.DraftShared(draft, sharedBy))
+                        } catch (_: Exception) {}
                     }
                 }
 
                 on("spin_started") { args ->
                     if (args.isNotEmpty()) {
-                        val spin = gson.fromJson(args[0].toString(), SpinState::class.java)
-                        _eventsFlow.tryEmit(SocketEvent.SpinStarted(spin))
+                        try {
+                            val spin = gson.fromJson(args[0].toString(), SpinState::class.java)
+                            _eventsFlow.tryEmit(SocketEvent.SpinStarted(spin))
+                        } catch (_: Exception) {}
                     }
                 }
 
                 on("user_eliminated") { args ->
                     if (args.isNotEmpty()) {
-                        val json = JSONObject(args[0].toString())
-                        val eliminatedId = json.optString("eliminatedUserId")
-                        val remainingArray = json.optJSONArray("remainingUsers")
-                        val remainingList = mutableListOf<String>()
-                        if (remainingArray != null) {
-                            for (i in 0 until remainingArray.length()) {
-                                remainingList.add(remainingArray.getString(i))
+                        try {
+                            val json = JSONObject(args[0].toString())
+                            val eliminatedId = json.optString("eliminatedUserId")
+                            val remainingArray = json.optJSONArray("remainingUsers")
+                            val remainingList = mutableListOf<String>()
+                            if (remainingArray != null) {
+                                for (i in 0 until remainingArray.length()) {
+                                    remainingList.add(remainingArray.getString(i))
+                                }
                             }
-                        }
-                        val round = json.optInt("round", 1)
-                        _eventsFlow.tryEmit(SocketEvent.UserEliminated(eliminatedId, remainingList, round))
+                            val round = json.optInt("round", 1)
+                            _eventsFlow.tryEmit(SocketEvent.UserEliminated(eliminatedId, remainingList, round))
+                        } catch (_: Exception) {}
                     }
                 }
 
                 on("winner_announced") { args ->
                     if (args.isNotEmpty()) {
-                        val json = JSONObject(args[0].toString())
-                        val winnerId = json.optString("winnerId")
-                        val spin = gson.fromJson(json.optJSONObject("spinState")?.toString() ?: "{}", SpinState::class.java)
-                        _eventsFlow.tryEmit(SocketEvent.WinnerAnnounced(winnerId, spin))
+                        try {
+                            val json = JSONObject(args[0].toString())
+                            val winnerId = json.optString("winnerId")
+                            val spin = gson.fromJson(json.optJSONObject("spinState")?.toString() ?: "{}", SpinState::class.java)
+                            _eventsFlow.tryEmit(SocketEvent.WinnerAnnounced(winnerId, spin))
+                        } catch (_: Exception) {}
                     }
                 }
 
                 on("room_state") { args ->
                     if (args.isNotEmpty()) {
-                        val room = gson.fromJson(args[0].toString(), Room::class.java)
-                        _eventsFlow.tryEmit(SocketEvent.RoomStateUpdated(room))
+                        try {
+                            val room = gson.fromJson(args[0].toString(), Room::class.java)
+                            _eventsFlow.tryEmit(SocketEvent.RoomStateUpdated(room))
+                        } catch (_: Exception) {}
                     }
                 }
 
                 on("error_event") { args ->
                     if (args.isNotEmpty()) {
-                        val json = JSONObject(args[0].toString())
-                        val message = json.optString("message", "Unknown error")
-                        _eventsFlow.tryEmit(SocketEvent.ErrorOccurred(message))
+                        try {
+                            val json = JSONObject(args[0].toString())
+                            val message = json.optString("message", "Unknown error")
+                            _eventsFlow.tryEmit(SocketEvent.ErrorOccurred(message))
+                        } catch (_: Exception) {}
                     }
                 }
 

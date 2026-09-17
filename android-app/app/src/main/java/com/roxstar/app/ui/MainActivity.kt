@@ -159,21 +159,27 @@ class MainActivity : AppCompatActivity() {
 
                 if (state.currentRoom != null) {
                     val room = state.currentRoom
-                    binding.tvActiveRoomInfo.text = "🟢 Room: ${room.name} (${room.id})\nMembers: ${room.participants.size} | Role: ${if (state.isOwner) "Owner 👑" else "Member"}"
+                    val participants = room.participants ?: emptyList()
+                    val sharedDrafts = room.sharedDrafts ?: emptyList()
+                    val roomName = if (room.name.isNotBlank()) room.name else "Room"
+                    val roomId = room.id
+                    binding.tvActiveRoomInfo.text = "🟢 Room: $roomName ($roomId)\nMembers: ${participants.size} | Shared Takes: ${sharedDrafts.size} | Role: ${if (state.isOwner) "Owner 👑" else "Member"}"
                     binding.btnStartSpin.isEnabled = state.isOwner
+
+                    renderSharedDraftsList(sharedDrafts)
 
                     // Pre-populate the wheel with current room members (before spin starts)
                     if (!roomSessionViewModel.spinState.value.isSpinRunning &&
                         roomSessionViewModel.spinState.value.winnerId == null) {
-                        val names = room.participants.map { it.username }
+                        val names = participants.mapNotNull { it.username.ifBlank { null } ?: it.userId.ifBlank { null } }
                         if (names.isNotEmpty()) {
                             binding.spinWheelView.setSegments(names)
                         }
                     }
                 } else {
-
                     binding.tvActiveRoomInfo.text = "Not in any room. Enter room ID/name above to join."
                     binding.btnStartSpin.isEnabled = false
+                    binding.llSharedDraftsContainer.removeAllViews()
                 }
 
                 state.errorMessage?.let {
@@ -296,6 +302,56 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun renderSharedDraftsList(sharedDrafts: List<Draft>) {
+        binding.llSharedDraftsContainer.removeAllViews()
+        if (sharedDrafts.isEmpty()) {
+            val emptyTv = TextView(this).apply {
+                text = "No shared voice takes in this room yet.\nTap '🚀 Share' on any draft above to broadcast it here!"
+                setTextColor(android.graphics.Color.parseColor("#64748B"))
+                textSize = 12f
+                setPadding(0, 4, 0, 8)
+            }
+            binding.llSharedDraftsContainer.addView(emptyTv)
+            return
+        }
+
+        for (draft in sharedDrafts) {
+            val cardView = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(12, 12, 12, 12)
+                setBackgroundColor(android.graphics.Color.parseColor("#0F172A"))
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 0, 10) }
+            }
+
+            val titleTv = TextView(this).apply {
+                val durSec = (draft.durationMs / 1000.0).format(1)
+                text = "🎙️ ${draft.title}\n(${draft.effectApplied} • ${durSec}s)"
+                setTextColor(android.graphics.Color.WHITE)
+                textSize = 12f
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val playBtn = Button(this).apply {
+                text = "▶ Play"
+                textSize = 11f
+                setBackgroundColor(android.graphics.Color.parseColor("#6366F1"))
+                setTextColor(android.graphics.Color.WHITE)
+                setOnClickListener {
+                    onPlayDraft(draft)
+                    Toast.makeText(this@MainActivity, "Playing '${draft.title}'", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            cardView.addView(titleTv)
+            cardView.addView(playBtn)
+            binding.llSharedDraftsContainer.addView(cardView)
+        }
+    }
+
     private fun Double.format(digits: Int) = String.format("%.${digits}f", this)
 
     // ── Audio Studio Operations ───────────────────────────────────────────────
@@ -344,6 +400,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onShareDraftWithRoom(draft: Draft) {
+        if (roomSessionViewModel.roomState.value.currentRoom == null) {
+            Toast.makeText(this, "Please create or join a room first to share your voice draft!", Toast.LENGTH_SHORT).show()
+            return
+        }
         roomSessionViewModel.shareDraft(draft)
     }
 

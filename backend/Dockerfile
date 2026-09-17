@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Build & Dependencies
 # ==========================================
-FROM node:20-alpine AS dependencies
+FROM node:24-alpine AS dependencies
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm ci --only=production && npm cache clean --force
 # ==========================================
 # Stage 2: Production Runner
 # ==========================================
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 

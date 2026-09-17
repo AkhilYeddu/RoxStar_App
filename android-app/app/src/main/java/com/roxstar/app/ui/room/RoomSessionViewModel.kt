@@ -109,7 +109,10 @@ class RoomSessionViewModel(
 
                     is SocketEvent.DraftShared -> {
                         val room = _roomState.value.currentRoom ?: return@collect
-                        val drafts = room.sharedDrafts.toMutableList().also { it.add(0, event.draft) }
+                        val drafts = room.sharedDrafts.toMutableList()
+                        if (drafts.none { it.id == event.draft.id }) {
+                            drafts.add(0, event.draft)
+                        }
                         _roomState.value = _roomState.value.copy(
                             currentRoom = room.copy(sharedDrafts = drafts),
                             infoMessage = "New draft shared: ${event.draft.title} by ${event.sharedBy}"
@@ -293,7 +296,14 @@ class RoomSessionViewModel(
     }
 
     fun shareDraft(draft: Draft) {
-        val room = _roomState.value.currentRoom ?: return
+        val room = _roomState.value.currentRoom
+        if (room == null) {
+            _roomState.value = _roomState.value.copy(
+                errorMessage = "Please join or create a room first to share a voice draft!"
+            )
+            return
+        }
+
         viewModelScope.launch {
             try {
                 val req = ShareDraftRequest(
@@ -304,16 +314,28 @@ class RoomSessionViewModel(
                     effectApplied = draft.effectApplied
                 )
                 val response = apiService.shareDraft(room.id, req)
-                if (response.isSuccessful && response.body()?.data != null) {
-                    _roomState.value = _roomState.value.copy(
-                        currentRoom = response.body()!!.data,
-                        infoMessage = "Draft '${draft.title}' shared with room!"
-                    )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val current = _roomState.value.currentRoom
+                    if (current != null) {
+                        val updatedDrafts = current.sharedDrafts.toMutableList()
+                        if (updatedDrafts.none { it.id == draft.id }) {
+                            updatedDrafts.add(0, draft)
+                        }
+                        _roomState.value = _roomState.value.copy(
+                            currentRoom = current.copy(sharedDrafts = updatedDrafts),
+                            infoMessage = "Draft '${draft.title}' shared with room!"
+                        )
+                    } else {
+                        _roomState.value = _roomState.value.copy(
+                            infoMessage = "Draft '${draft.title}' shared with room!"
+                        )
+                    }
                 } else {
-                    _roomState.value = _roomState.value.copy(errorMessage = "Failed to share draft")
+                    val errMsg = response.body()?.message ?: "Failed to share draft"
+                    _roomState.value = _roomState.value.copy(errorMessage = errMsg)
                 }
             } catch (e: Exception) {
-                _roomState.value = _roomState.value.copy(errorMessage = e.localizedMessage)
+                _roomState.value = _roomState.value.copy(errorMessage = e.localizedMessage ?: "Failed to share draft")
             }
         }
     }

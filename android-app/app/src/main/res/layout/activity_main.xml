@@ -311,6 +311,24 @@
                     android:textSize="13sp"
                     android:layout_marginBottom="12dp" />
 
+                <!-- Shared Voice Drafts in Room Section -->
+                <TextView
+                    android:id="@+id/tvSharedDraftsHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎙️ Shared Voice Takes in Room:"
+                    android:textColor="#CBD5E1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <LinearLayout
+                    android:id="@+id/llSharedDraftsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="14dp" />
+
                 <!-- Spin Wheel Panel -->
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -19,6 +19,20 @@ data class LeaveRoomRequest(
     val userId: String
 )
 
+data class SharedDraftData(
+    val id: String = "",
+    val userId: String = "",
+    val title: String = "",
+    val durationMs: Long = 0L,
+    val effectApplied: String = "NONE",
+    val fileUrl: String = ""
+)
+
+data class ShareDraftResponse(
+    val draft: SharedDraftData? = null,
+    val sharedBy: String? = null
+)
+
 data class ShareDraftRequest(
     val userId: String,
     val draftId: String,
@@ -60,7 +74,7 @@ interface ApiService {
     suspend fun shareDraft(
         @Path("roomId") roomId: String,
         @Body request: ShareDraftRequest
-    ): Response<ApiResponse<Room>>
+    ): Response<ApiResponse<ShareDraftResponse>>
 
     @POST("api/rooms/{roomId}/spin/start")
     suspend fun startSpin(
