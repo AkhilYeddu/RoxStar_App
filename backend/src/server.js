@@ -89,9 +89,11 @@ const startServer = async () => {
       logger.warn({ err: seedErr.message }, 'Skipped auto-seeding default data');
     }
 
-    server.listen(config.port, () => {
-      logger.info(`RoxStar Real-Time Service running on port ${config.port} [${config.nodeEnv}]`);
-      logger.info(`Health check available at: http://localhost:${config.port}/api/health`);
+    server.listen(config.port, '0.0.0.0', () => {
+      logger.info(`RoxStar Real-Time Service running on port ${config.port} across ALL interfaces [${config.nodeEnv}]`);
+      logger.info(`Health check → http://localhost:${config.port}/api/health`);
+      logger.info(`Android emulator → http://10.0.2.2:${config.port}/api/health`);
+      logger.info(`Physical device / LAN → http://172.20.197.141:${config.port}/api/health`);
     });
   } catch (error) {
     logger.error({ error: error.message }, 'Failed to start server');

@@ -21,7 +21,10 @@ class RoxStarApplication : Application() {
     lateinit var socketManager: SocketManager
         private set
 
-    var serverBaseUrl: String = "http://10.0.2.2:4000/" // Default Android emulator localhost
+    // ── Server URL ────────────────────────────────────────────────────────────
+    // Android Emulator  → 10.0.2.2 is the host-machine loopback alias
+    // Physical Device   → use your machine's LAN IP: 172.20.197.141
+    var serverBaseUrl: String = "http://10.0.2.2:4000/" // default: emulator
 
     override fun onCreate() {
         super.onCreate()
