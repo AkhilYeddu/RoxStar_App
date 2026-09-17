@@ -1,0 +1,23 @@
+# .clangd — IDE language server configuration for Android NDK C++ files
+#
+# These errors (jni.h not found, cstdint not found, JNIEXPORT unknown) are
+# IDE false-positives. clangd does not automatically know the NDK include paths.
+# The actual Gradle/CMake build works correctly because ANDROID_STL=c++_shared
+# is set and the NDK provides all required headers at build time.
+#
+# To fully silence these IDE errors, point clangd to your local NDK by
+# uncommenting and adjusting the CompileFlags below with your actual NDK path.
+# You can find your NDK path in Android Studio: File → Project Structure → SDK Location.
+#
+# Example for NDK r26 on Windows:
+#   - Add: -IC:/Users/<YOU>/AppData/Local/Android/Sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include
+#   - Add: -IC:/Users/<YOU>/AppData/Local/Android/Sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/aarch64-linux-android
+#
+# The simplest fix: open the project in Android Studio and let it generate
+# compile_commands.json via CMake, which gives clangd perfect include info.
+
+CompileFlags:
+  Add:
+    - -std=c++20
+    - -DANDROID
+    - -D__ANDROID_API__=24

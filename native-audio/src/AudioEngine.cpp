@@ -16,22 +16,17 @@ AudioEngine::~AudioEngine() {
 void AudioEngine::setupEffects() {
     mEchoEffect = std::make_unique<EchoEffect>(mSampleRate, 250.0f, 0.5f, 0.5f);
     mReverbEffect = std::make_unique<ReverbEffect>(mSampleRate, 0.7f, 0.25f, 0.4f);
-    mActiveEffect = nullptr;
+    mHeliumEffect = std::make_unique<HeliumEffect>(mSampleRate, 1.65f);
+    mDemonicEffect = std::make_unique<DemonicEffect>(mSampleRate, 0.60f);
+    mSelectedEffect = EffectType::NONE;
 }
 
 void AudioEngine::setEffectType(EffectType effect) {
-    switch (effect) {
-        case EffectType::ECHO:
-            mEchoEffect->reset();
-            mActiveEffect.reset(); // Don't delete, just switch pointer logic
-            // Use pointer directly
-            break;
-        case EffectType::REVERB:
-            mReverbEffect->reset();
-            break;
-        default:
-            break;
-    }
+    mSelectedEffect = effect;
+    if (effect == EffectType::ECHO && mEchoEffect) mEchoEffect->reset();
+    else if (effect == EffectType::REVERB && mReverbEffect) mReverbEffect->reset();
+    else if (effect == EffectType::HELIUM && mHeliumEffect) mHeliumEffect->reset();
+    else if (effect == EffectType::DEMONIC && mDemonicEffect) mDemonicEffect->reset();
 }
 
 void AudioEngine::setEchoParameters(float delayMs, float feedback, float wetMix) {
@@ -57,12 +52,17 @@ bool AudioEngine::startRecording(const std::string& outputWavPath, EffectType ef
 
     closeStreams();
     mCurrentRecordingPath = outputWavPath;
+    mSelectedEffect = effect;
 
     // Reset selected effect
-    if (effect == EffectType::ECHO) {
+    if (effect == EffectType::ECHO && mEchoEffect) {
         mEchoEffect->reset();
-    } else if (effect == EffectType::REVERB) {
+    } else if (effect == EffectType::REVERB && mReverbEffect) {
         mReverbEffect->reset();
+    } else if (effect == EffectType::HELIUM && mHeliumEffect) {
+        mHeliumEffect->reset();
+    } else if (effect == EffectType::DEMONIC && mDemonicEffect) {
+        mDemonicEffect->reset();
     }
 
     if (!mWavWriter->open(outputWavPath, mSampleRate, mChannelCount, mFormatBits)) {
@@ -224,9 +224,16 @@ int64_t AudioEngine::getRecordingDurationMs() const {
 void AudioEngine::processAudioBufferDirect(int16_t* buffer, int32_t numFrames) {
     if (!buffer || numFrames <= 0) return;
 
-    if (mEchoEffect) {
+    if (mSelectedEffect == EffectType::ECHO && mEchoEffect) {
         mEchoEffect->process(buffer, numFrames, mChannelCount);
+    } else if (mSelectedEffect == EffectType::REVERB && mReverbEffect) {
+        mReverbEffect->process(buffer, numFrames, mChannelCount);
+    } else if (mSelectedEffect == EffectType::HELIUM && mHeliumEffect) {
+        mHeliumEffect->process(buffer, numFrames, mChannelCount);
+    } else if (mSelectedEffect == EffectType::DEMONIC && mDemonicEffect) {
+        mDemonicEffect->process(buffer, numFrames, mChannelCount);
     }
+
     if (mWavWriter && mWavWriter->isOpen()) {
         mWavWriter->write(buffer, numFrames);
     }
@@ -248,8 +255,14 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(
         int16_t* pcmBuffer = static_cast<int16_t*>(audioData);
 
         // Apply Voice Effect if active
-        if (mEchoEffect) {
+        if (mSelectedEffect == EffectType::ECHO && mEchoEffect) {
             mEchoEffect->process(pcmBuffer, numFrames, mChannelCount);
+        } else if (mSelectedEffect == EffectType::REVERB && mReverbEffect) {
+            mReverbEffect->process(pcmBuffer, numFrames, mChannelCount);
+        } else if (mSelectedEffect == EffectType::HELIUM && mHeliumEffect) {
+            mHeliumEffect->process(pcmBuffer, numFrames, mChannelCount);
+        } else if (mSelectedEffect == EffectType::DEMONIC && mDemonicEffect) {
+            mDemonicEffect->process(pcmBuffer, numFrames, mChannelCount);
         }
 
         // Write directly to local WAV draft file

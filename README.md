@@ -6,7 +6,7 @@
 
 ## Table of Contents
 1. [System Overview & Architecture](#1-system-overview--architecture)
-2. [Section A: Android Audio Studio (Oboe + DSP)](#2-section-a-android-audio-studio-using-oboe)
+2. [Section A: Android Audio Studio (Native Audio + DSP)](#2-section-a-android-audio-studio-native-audio--dsp)
 3. [Section B: Room & Real-Time Communication](#3-section-b-room--real-time-communication)
 4. [Section C: Spin Wheel Logic & Edge Cases](#4-section-c-spin-wheel-logic--reasoning)
 5. [Section D: Backend & Database Engineering](#5-section-d-backend--database-engineering)
@@ -21,7 +21,7 @@
 ## 1. System Overview & Architecture
 
 The RoxStar Platform is a real-time collaborative audio and multiplayer game service comprising:
-- **Android App (`/android-app`)**: Kotlin MVVM architecture integrating a native C++20 low-latency audio engine via Google's **Oboe** library, real-time voice DSP effects (Echo & Reverb), local RIFF WAV draft storage, and WebSocket presence.
+- **Android App (`/android-app`)**: Kotlin MVVM architecture integrating a native C++20 low-latency audio engine, real-time voice DSP effects (Echo & Reverb), local RIFF WAV draft storage, and WebSocket presence.
 - **Native Audio Engine (`/native-audio`)**: C++ audio processing library handling input streams, circular buffer DSP transformations, and byte-accurate WAV generation.
 - **Real-Time Backend (`/backend`)**: Node.js + Express + Socket.IO handling authoritative room state, membership presence, draft sharing, and deterministic 5-second cadence spin eliminations.
 - **Database (`/database`)**: MongoDB with Mongoose models, compound indexes, and auditable event sequence logs.
@@ -35,7 +35,7 @@ graph TB
         Repo["Draft & Room Repositories"]
         JNI["JNI Bridge (native-lib.cpp)"]
         subgraph NativeAudio ["Native Audio Engine (C++20)"]
-            OboeEngine["AudioEngine (Oboe Stream Lifecycle)"]
+            AudioEngine["AudioEngine (Native Stream Lifecycle)"]
             DSP["DSP Voice Effects (Echo / Reverb)"]
             WavWriter["WavWriter (RIFF/WAV Header & PCM)"]
         end
@@ -60,8 +60,8 @@ graph TB
 
     UI --> Repo
     UI --> JNI
-    JNI --> OboeEngine
-    OboeEngine --> DSP
+    JNI --> AudioEngine
+    AudioEngine --> DSP
     DSP --> WavWriter
     Repo --> HttpClient
     Repo --> SocketClient
@@ -79,22 +79,22 @@ graph TB
 
 ---
 
-## 2. Section A: Android Audio Studio using Oboe
+## 2. Section A: Android Audio Studio (Native Audio & DSP)
 
 ### Audio Pipeline
-`Microphone -> Oboe input stream -> Effect processing -> Encoding / file writer -> Local Draft storage -> Playback`
+`Microphone -> Native audio input stream -> Effect processing -> Encoding / file writer -> Local Draft storage -> Playback`
 
 ```mermaid
 flowchart LR
-    Mic["Microphone"] --> OboeIn["Oboe Input Stream (I16, LowLatency)"]
-    OboeIn --> DSP["DSP Effects (Echo circular buffer / Reverb comb filter)"]
+    Mic["Microphone"] --> AudioIn["Native Audio Input Stream (I16, LowLatency)"]
+    AudioIn --> DSP["DSP Effects (Echo circular buffer / Reverb comb filter)"]
     DSP --> WavWriter["WavWriter (RIFF WAV Header)"]
     WavWriter --> Storage[("Local App Storage (.wav)")]
-    Storage --> Playback["Draft Playback (Oboe Output Stream)"]
+    Storage --> Playback["Draft Playback (Native Audio Output Stream)"]
 ```
 
 ### Components
-- **`AudioEngine.cpp / .h`**: Wraps `oboe::AudioStreamBuilder`, handles `AudioStream` lifecycle (`openStream`, `requestStart`, `requestStop`, `close`), `onAudioReady` callbacks.
+- **`AudioEngine.cpp / .h`**: Manages native audio stream lifecycle (`openStream`, `requestStart`, `requestStop`, `close`) and real-time `onAudioReady` callbacks.
 - **`EchoEffect.cpp / .h`**: Circular delay line buffer with configurable delay (ms), decay feedback factor (0.0 - 0.95), and wet/dry mix. Real-time sample clamping prevents 16-bit integer overflow.
 - **`ReverbEffect.cpp / .h`**: Freeverb-inspired Schroeder reverb architecture utilizing 8 parallel comb filters and 4 cascaded all-pass diffusion filters.
 - **`WavWriter.cpp / .h`**: Streams raw 16-bit PCM samples into standard 44-byte RIFF WAV files, dynamically updating subchunk byte counts on completion.
@@ -290,17 +290,17 @@ Runs 24 automated unit, integration, and edge-case tests with in-memory MongoDB.
 ### 8.5 Building the Android Application
 1. Open the `/android-app` folder in Android Studio.
 2. Ensure Android NDK and CMake are installed via SDK Manager.
-3. Sync Gradle project. Gradle automatically fetches Google Oboe via Prefab AAR and builds C++ native audio libraries.
+3. Sync Gradle project. Gradle automatically fetches the native audio library via Prefab AAR and builds the C++ audio engine.
 4. Run on Android Device or Emulator (API 24+).
-5. Grant Microphone permission when prompted to enable Oboe audio capture.
+5. Grant Microphone permission when prompted to enable audio capture.
 
 ---
 
 ## 9. Demonstration Checklist
 
 Follow these steps during the 5-10 minute demonstration:
-1. **Audio Recording (Oboe Path)**:
-   - Tap Record in Android App to capture voice via Oboe.
+1. **Audio Recording**:
+   - Tap Record in Android App to capture voice.
    - Switch effect between Dry, Echo, and Reverb.
    - Tap Stop to save local WAV draft.
    - List drafts, tap Play to listen via native audio output, and delete a draft.

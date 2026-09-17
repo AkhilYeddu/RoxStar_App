@@ -16,6 +16,8 @@
 #include "effects/AudioEffect.h"
 #include "effects/EchoEffect.h"
 #include "effects/ReverbEffect.h"
+#include "effects/HeliumEffect.h"
+#include "effects/DemonicEffect.h"
 #include "wav/WavWriter.h"
 
 namespace roxstar {
@@ -80,9 +82,11 @@ private:
 
     std::chrono::steady_clock::time_point mRecordingStartTime;
 
-    std::unique_ptr<AudioEffect> mActiveEffect;
+    EffectType mSelectedEffect{EffectType::NONE};
     std::unique_ptr<EchoEffect> mEchoEffect;
     std::unique_ptr<ReverbEffect> mReverbEffect;
+    std::unique_ptr<HeliumEffect> mHeliumEffect;
+    std::unique_ptr<DemonicEffect> mDemonicEffect;
     std::unique_ptr<WavWriter> mWavWriter;
 
 #if OBOE_AVAILABLE

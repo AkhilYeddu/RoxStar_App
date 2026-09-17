@@ -8,7 +8,9 @@ enum class EffectType {
     NONE = 0,
     ECHO = 1,
     REVERB = 2,
-    PITCH_SHIFT = 3
+    PITCH_SHIFT = 3,
+    HELIUM = 4,
+    DEMONIC = 5
 };
 
 /**

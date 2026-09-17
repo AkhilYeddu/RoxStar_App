@@ -46,6 +46,7 @@ const shareDraftSchema = z.object({
   }),
 });
 
+router.get('/', roomController.listRooms);
 router.post('/', idempotency, validate(createRoomSchema), roomController.createRoom);
 router.post('/:roomId/join', validate(joinRoomSchema), roomController.joinRoom);
 router.post('/:roomId/leave', validate(leaveRoomSchema), roomController.leaveRoom);

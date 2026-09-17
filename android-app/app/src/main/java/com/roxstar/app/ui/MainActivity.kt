@@ -10,11 +10,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.roxstar.app.RoxStarApplication
 import com.roxstar.app.audio.EffectType
-import com.roxstar.app.audio.EngineState
 import com.roxstar.app.data.models.Draft
 import com.roxstar.app.ui.audio.AudioStudioViewModel
-import com.roxstar.app.ui.room.RoomViewModel
-import com.roxstar.app.ui.spin.SpinWheelViewModel
+import com.roxstar.app.ui.room.RoomSessionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -23,8 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var app: RoxStarApplication
     private lateinit var audioViewModel: AudioStudioViewModel
-    private lateinit var roomViewModel: RoomViewModel
-    private lateinit var spinViewModel: SpinWheelViewModel
+    private lateinit var roomSessionViewModel: RoomSessionViewModel
 
     private var currentUserId: String = UUID.randomUUID().toString().take(6)
     private var currentUsername: String = "User_$currentUserId"
@@ -33,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            Toast.makeText(this, "Microphone permission granted! Ready to record with Oboe.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Microphone permission granted! Ready to record.", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Microphone permission is required to record voice drafts.", Toast.LENGTH_LONG).show()
         }
@@ -44,11 +41,9 @@ class MainActivity : AppCompatActivity() {
         app = application as RoxStarApplication
 
         audioViewModel = AudioStudioViewModel(app.draftRepository)
-        roomViewModel = RoomViewModel(app.apiService, app.socketManager)
-        spinViewModel = SpinWheelViewModel(app.apiService, app.socketManager)
+        roomSessionViewModel = RoomSessionViewModel(app.apiService, app.socketManager)
 
-        roomViewModel.setUserInfo(currentUserId, currentUsername)
-        spinViewModel.setUserId(currentUserId)
+        roomSessionViewModel.setUserInfo(currentUserId, currentUsername)
 
         checkMicrophonePermission()
         observeViewModels()
@@ -74,20 +69,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            roomViewModel.uiState.collectLatest { state ->
+            roomSessionViewModel.roomState.collectLatest { state ->
                 state.errorMessage?.let {
                     Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
-                    roomViewModel.clearMessages()
+                    roomSessionViewModel.clearMessages()
                 }
                 state.infoMessage?.let {
                     Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
-                    roomViewModel.clearMessages()
+                    roomSessionViewModel.clearMessages()
                 }
             }
         }
 
         lifecycleScope.launch {
-            spinViewModel.uiState.collectLatest { state ->
+            roomSessionViewModel.spinState.collectLatest { state ->
                 state.errorMessage?.let {
                     Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
                 }
@@ -95,7 +90,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Audio Studio Operations
+    // ── Audio Studio Operations ───────────────────────────────────────────────
+
     fun onStartRecording(title: String, effect: EffectType) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             audioViewModel.selectEffect(effect)
@@ -121,30 +117,27 @@ class MainActivity : AppCompatActivity() {
         audioViewModel.deleteDraft(draftId)
     }
 
-    // Room Operations
+    // ── Room Operations ───────────────────────────────────────────────────────
+
     fun onCreateRoom(roomName: String) {
-        roomViewModel.createRoom(app.serverBaseUrl, roomName)
+        roomSessionViewModel.createRoom(app.serverBaseUrl, roomName)
     }
 
     fun onJoinRoom(roomId: String) {
-        roomViewModel.joinRoom(app.serverBaseUrl, roomId)
+        roomSessionViewModel.joinRoom(app.serverBaseUrl, roomId)
     }
 
     fun onLeaveRoom() {
-        roomViewModel.leaveRoom()
+        roomSessionViewModel.leaveRoom()
     }
 
     fun onShareDraftWithRoom(draft: Draft) {
-        roomViewModel.shareDraft(draft)
+        roomSessionViewModel.shareDraft(draft)
     }
 
-    // Spin Wheel Operations
+    // ── Spin Wheel Operations ─────────────────────────────────────────────────
+
     fun onStartSpin() {
-        val roomId = roomViewModel.uiState.value.currentRoom?.id
-        if (roomId != null) {
-            spinViewModel.triggerStartSpin(roomId)
-        } else {
-            Toast.makeText(this, "Must be inside an active room to spin", Toast.LENGTH_SHORT).show()
-        }
+        roomSessionViewModel.triggerStartSpin()
     }
 }

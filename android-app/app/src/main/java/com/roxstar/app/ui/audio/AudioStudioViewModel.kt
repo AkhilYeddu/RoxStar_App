@@ -81,7 +81,7 @@ class AudioStudioViewModel(private val repository: DraftRepository) : ViewModel(
             startDurationTimer()
         } else {
             _uiState.value = _uiState.value.copy(
-                statusMessage = "Failed to start recording. Check microphone permission or Oboe stream."
+                statusMessage = "Failed to start recording. Check microphone permission."
             )
         }
         return success
@@ -154,12 +154,15 @@ class AudioStudioViewModel(private val repository: DraftRepository) : ViewModel(
     }
 
     fun deleteDraft(draftId: String) {
+        // Stop playback immediately if this draft is currently playing
+        if (_uiState.value.activePlayingDraftId == draftId) {
+            stopPlayback()
+        }
         viewModelScope.launch {
-            repository.deleteDraft(draftId)
-            if (_uiState.value.activePlayingDraftId == draftId) {
-                stopPlayback()
-            }
-            _uiState.value = _uiState.value.copy(statusMessage = "Draft deleted.")
+            val deleted = repository.deleteDraft(draftId)
+            _uiState.value = _uiState.value.copy(
+                statusMessage = if (deleted) "Draft deleted." else "Could not delete draft — file may already be removed."
+            )
         }
     }
 

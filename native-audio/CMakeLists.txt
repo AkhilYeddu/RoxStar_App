@@ -12,6 +12,8 @@ set(AUDIO_SOURCES
     src/AudioEngine.cpp
     src/effects/EchoEffect.cpp
     src/effects/ReverbEffect.cpp
+    src/effects/HeliumEffect.cpp
+    src/effects/DemonicEffect.cpp
     src/wav/WavWriter.cpp
 )
 

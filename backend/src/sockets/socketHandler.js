@@ -36,9 +36,9 @@ const setupSocketHandlers = (io) => {
           connectionStatus: 'CONNECTED',
         });
 
-        // 4. Return authoritative room_state to connecting/reconnecting client
+        // 4. Return authoritative room_state to all room members
         const roomState = await roomService.getRoomDetails(roomId);
-        socket.emit('room_state', roomState);
+        io.to(roomId).emit('room_state', roomState);
 
         // 5. If a spin is actively running in this room, synchronize spin state immediately (Edge Case 4)
         const activeSpinSnapshot = await spinEngine.getCurrentSpinSnapshot(roomId);
@@ -115,7 +115,7 @@ const setupSocketHandlers = (io) => {
         });
 
         const roomState = await roomService.getRoomDetails(roomId);
-        socket.emit('room_state', roomState);
+        io.to(roomId).emit('room_state', roomState);
 
         const activeSpinSnapshot = await spinEngine.getCurrentSpinSnapshot(roomId);
         if (activeSpinSnapshot && activeSpinSnapshot.status === 'RUNNING') {
@@ -139,6 +139,10 @@ const setupSocketHandlers = (io) => {
             userId: targetUserId,
             reason: 'leave',
           });
+          const remainingState = await roomService.getRoomDetails(targetRoomId).catch(() => null);
+          if (remainingState) {
+            io.to(targetRoomId).emit('room_state', remainingState);
+          }
           if (socket.roomId === targetRoomId) {
             socket.roomId = null;
           }
@@ -154,26 +158,35 @@ const setupSocketHandlers = (io) => {
 
       if (socket.roomId && socket.userId) {
         try {
-          // Update DB presence to DISCONNECTED
-          await roomService.setConnectionStatus(socket.id, 'DISCONNECTED');
+          // Fully remove the member from the room on disconnect (cleans up empty rooms)
+          const targetRoomId = socket.roomId;
+          const targetUserId = socket.userId;
 
-          // Broadcast mandatory event: user_left
-          io.to(socket.roomId).emit('user_left', {
-            userId: socket.userId,
+          // Try a proper leave (handles ownership transfer, etc.)
+          await roomService.leaveRoom({ roomId: targetRoomId, userId: targetUserId }).catch(async () => {
+            // Fallback: just delete the member record directly
+            await RoomMember.deleteOne({ roomId: targetRoomId, userId: targetUserId });
+          });
+
+          // Broadcast user_left
+          io.to(targetRoomId).emit('user_left', {
+            userId: targetUserId,
+            username: socket.username,
             reason: reason || 'disconnect',
           });
 
-          // Check if any members remain connected in room
-          const remainingConnected = await RoomMember.countDocuments({
-            roomId: socket.roomId,
-            connectionStatus: 'CONNECTED',
-          });
+          const updatedState = await roomService.getRoomDetails(targetRoomId).catch(() => null);
+          if (updatedState) {
+            io.to(targetRoomId).emit('room_state', updatedState);
+          }
 
-          const room = await Room.findOne({ roomId: socket.roomId });
+          // Check if any members remain in room
+          const remainingCount = await RoomMember.countDocuments({ roomId: targetRoomId });
+          const room = await Room.findOne({ roomId: targetRoomId });
 
           // Edge Case 7: If all participants leave while spin is RUNNING -> abort spin
-          if (remainingConnected === 0 && room && room.status === 'IN_SPIN') {
-            await spinEngine.abortSpin(room.activeSpinId, socket.roomId, 'ALL_PARTICIPANTS_LEFT');
+          if (remainingCount === 0 && room && room.status === 'IN_SPIN') {
+            await spinEngine.abortSpin(room.activeSpinId, targetRoomId, 'ALL_PARTICIPANTS_LEFT');
           }
         } catch (err) {
           logger.error({ err: err.message }, 'Error handling socket disconnect');

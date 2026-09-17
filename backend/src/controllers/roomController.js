@@ -16,6 +16,19 @@ class RoomController {
     }
   }
 
+  async listRooms(req, res, next) {
+    try {
+      const rooms = await roomService.listRooms();
+      res.status(200).json({
+        success: true,
+        data: rooms,
+        count: rooms.length,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async joinRoom(req, res, next) {
     try {
       const { roomId } = req.params;

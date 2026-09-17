@@ -1,0 +1,40 @@
+{
+  "buildFiles": [
+    "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\src\\main\\cpp\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\akhil\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\.cxx\\Debug\\d63342k6\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\akhil\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\.cxx\\Debug\\d63342k6\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "roxstar_audio_native::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "roxstar_audio_native",
+      "output": "C:\\Users\\akhil\\Desktop\\Assignment\\android-app\\app\\build\\intermediates\\cxx\\Debug\\d63342k6\\obj\\x86_64\\libroxstar_audio_native.so",
+      "runtimeFiles": [
+        "C:\\Users\\akhil\\.gradle\\caches\\transforms-3\\1276603fc22e3b45d78639abcc7fcbfe\\transformed\\oboe-1.8.0\\prefab\\modules\\oboe\\libs\\android.x86_64\\liboboe.so"
+      ]
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "C:\\Users\\akhil\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cppCompilerExecutable": "C:\\Users\\akhil\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

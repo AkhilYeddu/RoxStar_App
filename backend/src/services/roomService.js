@@ -45,6 +45,53 @@ class RoomService {
   }
 
   /**
+   * List active rooms (status != 'CLOSED')
+   */
+  async listRooms() {
+    // Immediate purge of DISCONNECTED members on room refresh
+    await RoomMember.deleteMany({ connectionStatus: 'DISCONNECTED' });
+
+    const rooms = await Room.find({ status: { $ne: 'CLOSED' } })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    const roomSummaries = await Promise.all(
+      rooms.map(async (room) => {
+        const participants = await RoomMember.find({ roomId: room.roomId }).select('userId username role connectionStatus');
+        const connectedParticipants = participants.filter((p) => p.connectionStatus === 'CONNECTED');
+        
+        // If room has no connected members, purge the room doc
+        if (connectedParticipants.length === 0) {
+          await Room.deleteOne({ roomId: room.roomId });
+          return null;
+        }
+
+        return {
+          id: room.roomId,
+          roomId: room.roomId,
+          name: room.name,
+          ownerId: room.ownerId,
+          status: room.status,
+          maxParticipants: room.maxParticipants,
+          participants: connectedParticipants.map((p) => ({
+            userId: p.userId,
+            username: p.username,
+            role: p.role,
+            connectionStatus: p.connectionStatus,
+          })),
+          participantCount: connectedParticipants.length,
+          activeSpinId: room.activeSpinId,
+          createdAt: room.createdAt,
+          updatedAt: room.updatedAt,
+        };
+      })
+    );
+
+    // Only return active rooms that have connected participants
+    return roomSummaries.filter((r) => r !== null && r.participantCount > 0);
+  }
+
+  /**
    * Join an existing room
    */
   async joinRoom({ roomId, userId, username, socketId = null }) {
