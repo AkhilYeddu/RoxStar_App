@@ -142,8 +142,30 @@ class SocketManager {
                 on("room_state") { args ->
                     if (args.isNotEmpty()) {
                         try {
+                            val json = JSONObject(args[0].toString())
+                            // Parse the room manually so we can map fileUrl -> filePath for shared drafts
                             val room = gson.fromJson(args[0].toString(), Room::class.java)
-                            _eventsFlow.tryEmit(SocketEvent.RoomStateUpdated(room))
+                            val sharedDraftsJson = json.optJSONArray("sharedDrafts")
+                            val parsedDrafts = if (sharedDraftsJson != null) {
+                                val drafts = mutableListOf<com.roxstar.app.data.models.Draft>()
+                                for (i in 0 until sharedDraftsJson.length()) {
+                                    val d = sharedDraftsJson.optJSONObject(i) ?: continue
+                                    drafts.add(
+                                        com.roxstar.app.data.models.Draft(
+                                            id = d.optString("id", d.optString("draftId", "")),
+                                            title = d.optString("title", "Voice Draft"),
+                                            filePath = d.optString("fileUrl", d.optString("filePath", "")),
+                                            durationMs = d.optLong("durationMs", 0L),
+                                            effectApplied = d.optString("effectApplied", "NONE"),
+                                            createdAt = d.opt("createdAt")
+                                        )
+                                    )
+                                }
+                                drafts
+                            } else {
+                                room.sharedDrafts
+                            }
+                            _eventsFlow.tryEmit(SocketEvent.RoomStateUpdated(room.copy(sharedDrafts = parsedDrafts)))
                         } catch (_: Exception) {}
                     }
                 }

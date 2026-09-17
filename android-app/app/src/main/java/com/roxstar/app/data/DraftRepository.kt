@@ -1,6 +1,7 @@
 package com.roxstar.app.data
 
 import android.content.Context
+import android.media.MediaPlayer
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.roxstar.app.audio.EffectType
@@ -11,9 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
 import java.io.File
 import java.util.UUID
 
@@ -24,6 +22,9 @@ class DraftRepository(private val context: Context) {
     val draftsFlow: StateFlow<List<Draft>> = _draftsFlow.asStateFlow()
 
     private var activePlaybackDraftId: String? = null
+
+    /** MediaPlayer used for downloaded/shared drafts to avoid sample-rate mismatch noise. */
+    private var mediaPlayer: MediaPlayer? = null
 
     init {
         loadDrafts()
@@ -82,10 +83,18 @@ class DraftRepository(private val context: Context) {
         }
     }
 
-    private var previewTrack: AudioTrack? = null
-
-    fun playDraft(draft: Draft): Boolean {
+    /**
+     * Play a draft file.
+     *
+     * - Own (locally recorded) drafts → NativeAudioEngine (Oboe), preserving effects.
+     * - Shared/downloaded drafts from other users → Android MediaPlayer, which reads
+     *   the WAV header to determine the exact sample rate and channel count, preventing
+     *   the white-noise artifact that occurs when the Oboe engine plays audio at a
+     *   mismatched rate.
+     */
+    fun playDraft(draft: Draft, onStart: (() -> Unit)? = null): Boolean {
         stopPlayback()
+
         // 1. Check if draft itself has an existing local file
         var path = draft.filePath
         if (path.isBlank() || !File(path).exists()) {
@@ -96,75 +105,121 @@ class DraftRepository(private val context: Context) {
             }
         }
 
-        if (path.isNotBlank() && File(path).exists()) {
-            val success = NativeAudioEngine.startPlayback(path)
-            if (success) {
-                activePlaybackDraftId = draft.id
-            }
-            return success
+        // 3. Check if cached from an earlier download
+        val cachedFile = File(getDraftsDirectory(), "shared_${draft.id}.wav")
+        if ((path.isBlank() || !File(path).exists()) && cachedFile.exists() && cachedFile.length() > 44) {
+            path = cachedFile.absolutePath
         }
 
-        // 3. If remote or no local file, synthesize preview tone using AudioTrack
-        playSynthesizedPreview(draft)
+        if (path.isNotBlank() && File(path).exists()) {
+            val isOwnRecording = _draftsFlow.value.any { it.id == draft.id }
+            return if (isOwnRecording) {
+                // Use native Oboe engine for own locally-recorded drafts
+                val success = NativeAudioEngine.startPlayback(path)
+                if (success) {
+                    activePlaybackDraftId = draft.id
+                    onStart?.invoke()
+                }
+                success
+            } else {
+                // Use MediaPlayer for shared/downloaded drafts — avoids sample-rate mismatch noise
+                playWithMediaPlayer(path, draft.id, onStart)
+                true
+            }
+        }
+
+        // 4. Not yet cached — download from server then play with MediaPlayer
+        downloadAndPlayWithMediaPlayer(draft, onStart)
         activePlaybackDraftId = draft.id
         return true
     }
 
-    private fun playSynthesizedPreview(draft: Draft) {
+    /**
+     * Play a WAV file with Android MediaPlayer. MediaPlayer reads the WAV header and
+     * correctly configures its decoder, so there is no risk of sample-rate mismatch.
+     */
+    private fun playWithMediaPlayer(filePath: String, draftId: String, onStart: (() -> Unit)? = null) {
+        try {
+            releaseMediaPlayer()
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(filePath)
+                prepare()
+                setOnCompletionListener {
+                    activePlaybackDraftId = null
+                    releaseMediaPlayer()
+                }
+                setOnErrorListener { _, _, _ ->
+                    activePlaybackDraftId = null
+                    releaseMediaPlayer()
+                    false
+                }
+                start()
+            }
+            activePlaybackDraftId = draftId
+            onStart?.invoke()
+        } catch (_: Exception) {
+            activePlaybackDraftId = null
+            releaseMediaPlayer()
+        }
+    }
+
+    /**
+     * Download a shared draft audio file from the server and play it via MediaPlayer.
+     * Runs the network request on a background thread, then switches to the main thread
+     * for MediaPlayer initialization (required by Android).
+     */
+    private fun downloadAndPlayWithMediaPlayer(draft: Draft, onStart: (() -> Unit)? = null) {
         Thread {
             try {
-                val sampleRate = 44100
-                val durationSec = Math.max(1.0, Math.min(draft.durationMs / 1000.0, 8.0))
-                val numSamples = (durationSec * sampleRate).toInt()
-                val buffer = ShortArray(numSamples)
-
-                val pitchFactor = when (draft.effectApplied.uppercase()) {
-                    "HELIUM" -> 1.75
-                    "DEMONIC" -> 0.58
-                    else -> 1.0
+                var urlStr = draft.filePath
+                if (urlStr.isBlank()) {
+                    urlStr = "/api/drafts/${draft.id}/audio"
                 }
-                val baseFreq = 440.0 * pitchFactor
-
-                for (i in 0 until numSamples) {
-                    val time = i.toDouble() / sampleRate
-                    val envelope = Math.min(1.0, Math.min(time * 8.0, (durationSec - time) * 8.0))
-                    val sample = Math.sin(2.0 * Math.PI * baseFreq * time) * 0.4 * envelope
-                    buffer[i] = (sample * Short.MAX_VALUE).toInt().toShort()
+                if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
+                    val base = "https://roxstar-app.azurewebsites.net".trimEnd('/')
+                    val sub = if (urlStr.startsWith("/")) urlStr else "/$urlStr"
+                    urlStr = base + sub
                 }
 
-                val track = AudioTrack.Builder()
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .build()
-                    )
-                    .setAudioFormat(
-                        AudioFormat.Builder()
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setSampleRate(sampleRate)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build()
-                    )
-                    .setBufferSizeInBytes(buffer.size * 2)
-                    .setTransferMode(AudioTrack.MODE_STATIC)
-                    .build()
+                val url = java.net.URL(urlStr)
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 8000
+                conn.readTimeout = 15000
+                conn.requestMethod = "GET"
+                conn.connect()
 
-                track.write(buffer, 0, buffer.size)
-                track.play()
-                previewTrack = track
-            } catch (_: Exception) {}
+                if (conn.responseCode in 200..299) {
+                    val bytes = conn.inputStream.readBytes()
+                    if (bytes.size > 44) {
+                        val cacheFile = File(getDraftsDirectory(), "shared_${draft.id}.wav")
+                        cacheFile.writeBytes(bytes)
+
+                        // MediaPlayer must be set up on the main thread
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            playWithMediaPlayer(cacheFile.absolutePath, draft.id, onStart)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                activePlaybackDraftId = null
+            }
         }.start()
     }
 
     fun stopPlayback(): Boolean {
         activePlaybackDraftId = null
-        try {
-            previewTrack?.stop()
-            previewTrack?.release()
-            previewTrack = null
-        } catch (_: Exception) {}
+        releaseMediaPlayer()
         return NativeAudioEngine.stopPlayback()
+    }
+
+    private fun releaseMediaPlayer() {
+        try {
+            mediaPlayer?.let {
+                if (it.isPlaying) it.stop()
+                it.release()
+            }
+        } catch (_: Exception) {}
+        mediaPlayer = null
     }
 
     fun getActivePlayingDraftId(): String? = activePlaybackDraftId
