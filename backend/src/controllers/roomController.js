@@ -86,7 +86,7 @@ class RoomController {
   async shareDraft(req, res, next) {
     try {
       const { roomId } = req.params;
-      const { userId, draftId, title, durationMs, effectApplied, fileUrl } = req.body;
+      const { userId, draftId, title, durationMs, effectApplied, fileUrl, audioBase64 } = req.body;
       const result = await roomService.shareDraft({
         roomId,
         userId,
@@ -95,6 +95,7 @@ class RoomController {
         durationMs,
         effectApplied,
         fileUrl,
+        audioBase64,
       });
 
       // Also trigger socket broadcast

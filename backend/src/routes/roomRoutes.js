@@ -43,6 +43,7 @@ const shareDraftSchema = z.object({
     durationMs: z.number().nonnegative().optional(),
     effectApplied: z.enum(['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT', 'HELIUM', 'DEMONIC']).optional(),
     fileUrl: z.string().optional(),
+    audioBase64: z.string().optional(),
   }),
 });
 

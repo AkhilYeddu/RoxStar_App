@@ -76,6 +76,7 @@ const setupSocketHandlers = (io) => {
           durationMs: draftData.durationMs,
           effectApplied: draftData.effectApplied,
           fileUrl: draftData.fileUrl,
+          audioBase64: draftData.audioBase64,
         });
 
         io.to(targetRoomId).emit('draft_shared', result);

@@ -18,5 +18,7 @@ router.post('/', validate(createDraftSchema), draftController.createDraft);
 router.get('/user/:userId', draftController.getUserDrafts);
 router.patch('/:draftId/rename', draftController.renameDraft);
 router.delete('/:draftId', draftController.deleteDraft);
+router.get('/:draftId/audio', draftController.getDraftAudio);
+router.post('/:draftId/audio', draftController.uploadDraftAudio);
 
 module.exports = router;

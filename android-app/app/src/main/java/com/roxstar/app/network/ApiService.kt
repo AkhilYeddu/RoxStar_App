@@ -38,7 +38,9 @@ data class ShareDraftRequest(
     val draftId: String,
     val title: String,
     val durationMs: Long,
-    val effectApplied: String
+    val effectApplied: String,
+    val audioBase64: String? = null,
+    val fileUrl: String? = null
 )
 
 data class StartSpinRequest(

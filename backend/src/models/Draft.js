@@ -27,6 +27,10 @@ const draftSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    audioBase64: {
+      type: String,
+      default: '',
+    },
     effectApplied: {
       type: String,
       enum: ['NONE', 'ECHO', 'REVERB', 'PITCH_SHIFT', 'HELIUM', 'DEMONIC'],

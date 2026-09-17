@@ -80,6 +80,56 @@ class DraftController {
       next(error);
     }
   }
+
+  async getDraftAudio(req, res, next) {
+    try {
+      const { draftId } = req.params;
+      const draft = await Draft.findOne({ draftId });
+      if (!draft || !draft.audioBase64) {
+        return res.status(404).json({ success: false, message: 'Audio not found for this draft' });
+      }
+      const buffer = Buffer.from(draft.audioBase64, 'base64');
+      res.setHeader('Content-Type', 'audio/wav');
+      res.setHeader('Content-Length', buffer.length);
+      res.setHeader('Accept-Ranges', 'bytes');
+      return res.status(200).send(buffer);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async uploadDraftAudio(req, res, next) {
+    try {
+      const { draftId } = req.params;
+      const { audioBase64 } = req.body;
+      if (!audioBase64) {
+        return res.status(400).json({ success: false, message: 'audioBase64 is required' });
+      }
+      const draft = await Draft.findOneAndUpdate(
+        { draftId },
+        {
+          $set: {
+            audioBase64,
+            fileUrl: `/api/drafts/${draftId}/audio`,
+          },
+        },
+        { new: true }
+      );
+      if (!draft) {
+        return res.status(404).json({ success: false, message: `Draft '${draftId}' not found` });
+      }
+      return res.status(200).json({
+        success: true,
+        data: {
+          draftId: draft.draftId,
+          fileUrl: `/api/drafts/${draftId}/audio`,
+        },
+        message: 'Audio uploaded successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new DraftController();

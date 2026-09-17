@@ -235,7 +235,7 @@ class RoomService {
   /**
    * Share a draft with room members
    */
-  async shareDraft({ roomId, userId, draftId, title, durationMs, effectApplied, fileUrl }) {
+  async shareDraft({ roomId, userId, draftId, title, durationMs, effectApplied, fileUrl, audioBase64 }) {
     const room = await Room.findOne({ roomId });
     if (!room) {
       const err = new Error(`Room '${roomId}' not found`);
@@ -251,6 +251,7 @@ class RoomService {
     }
 
     let draft = await Draft.findOne({ draftId });
+    const computedFileUrl = fileUrl || (audioBase64 ? `/api/drafts/${draftId}/audio` : '');
     if (!draft) {
       draft = new Draft({
         draftId,
@@ -258,12 +259,15 @@ class RoomService {
         title: title || 'Voice Draft',
         durationMs: durationMs || 0,
         effectApplied: effectApplied || 'NONE',
-        fileUrl: fileUrl || '',
+        fileUrl: computedFileUrl,
+        audioBase64: audioBase64 || '',
         sharedInRooms: [roomId],
       });
       await draft.save();
     } else {
       if (effectApplied) draft.effectApplied = effectApplied;
+      if (audioBase64) draft.audioBase64 = audioBase64;
+      if (fileUrl || audioBase64) draft.fileUrl = computedFileUrl;
       if (!draft.sharedInRooms.includes(roomId)) {
         draft.sharedInRooms.push(roomId);
       }
@@ -277,7 +281,7 @@ class RoomService {
         title: draft.title,
         durationMs: draft.durationMs,
         effectApplied: draft.effectApplied,
-        fileUrl: draft.fileUrl,
+        fileUrl: draft.fileUrl || `/api/drafts/${draft.draftId}/audio`,
         createdAt: draft.createdAt,
       },
       sharedBy: member.username,
