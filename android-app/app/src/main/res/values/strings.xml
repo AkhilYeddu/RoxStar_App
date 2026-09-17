@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">RoxStar Studio</string>
+    <string name="voice_draft_title">Voice Draft Studio</string>
+    <string name="room_hub_title">Real-Time Rooms</string>
+    <string name="spin_wheel_title">Spin Wheel Arena</string>
+    <string name="record_btn">Record</string>
+    <string name="stop_btn">Stop</string>
+    <string name="cancel_btn">Cancel</string>
+    <string name="play_btn">Play</string>
+    <string name="delete_btn">Delete</string>
+    <string name="effect_none">Dry / None</string>
+    <string name="effect_echo">Echo Effect</string>
+    <string name="effect_reverb">Reverb Effect</string>
+    <string name="share_draft">Share with Room</string>
+    <string name="start_spin">Start Spin Wheel</string>
+</resources>

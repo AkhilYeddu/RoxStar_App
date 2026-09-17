@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.RoxStar" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#6366F1</item>
+        <item name="colorSecondary">#EC4899</item>
+        <item name="android:statusBarColor">#0F172A</item>
+    </style>
+</resources>

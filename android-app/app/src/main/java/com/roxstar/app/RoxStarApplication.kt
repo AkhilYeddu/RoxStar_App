@@ -1,0 +1,53 @@
+package com.roxstar.app
+
+import android.app.Application
+import com.roxstar.app.data.DraftRepository
+import com.roxstar.app.network.ApiService
+import com.roxstar.app.network.SocketManager
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
+
+class RoxStarApplication : Application() {
+
+    lateinit var draftRepository: DraftRepository
+        private set
+
+    lateinit var apiService: ApiService
+        private set
+
+    lateinit var socketManager: SocketManager
+        private set
+
+    var serverBaseUrl: String = "http://10.0.2.2:4000/" // Default Android emulator localhost
+
+    override fun onCreate() {
+        super.onCreate()
+        draftRepository = DraftRepository(applicationContext)
+        socketManager = SocketManager()
+        setupRetrofit(serverBaseUrl)
+    }
+
+    fun setupRetrofit(baseUrl: String) {
+        serverBaseUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(serverBaseUrl)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        apiService = retrofit.create(ApiService::class.java)
+    }
+}
