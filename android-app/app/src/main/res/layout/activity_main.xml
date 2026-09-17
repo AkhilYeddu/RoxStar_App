@@ -84,11 +84,13 @@
                     android:layout_height="wrap_content"
                     android:background="#0F172A"
                     android:hint="Draft Title (e.g. My Vocal Take)"
+                    android:inputType="textNoSuggestions"
                     android:textColorHint="#64748B"
                     android:textColor="#FFFFFF"
                     android:padding="12dp"
                     android:textSize="14sp"
                     android:layout_marginBottom="12dp" />
+
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -258,11 +260,13 @@
                     android:layout_height="wrap_content"
                     android:background="#0F172A"
                     android:hint="Room Name or Room ID"
+                    android:inputType="textNoSuggestions"
                     android:textColorHint="#64748B"
                     android:textColor="#FFFFFF"
                     android:padding="12dp"
                     android:textSize="14sp"
                     android:layout_marginBottom="12dp" />
+
 
                 <LinearLayout
                     android:layout_width="match_parent"
