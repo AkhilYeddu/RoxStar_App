@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: RoxStar Voice Draft, Room & Spin Wheel API
+  description: Unified production REST and WebSocket API specification for audio drafts, authoritative rooms, and spin wheel system.
+  version: 1.0.0
+  contact:
+    name: RoxStar Engineering
+servers:
+  - url: http://localhost:4000
+    description: Local development server
+  - url: https://api.roxstar.example.com
+    description: Production Cloud Endpoint (AWS / GCP / Azure)
+
+paths:
+  /api/health:
+    get:
+      summary: Health check endpoint
+      description: Returns service uptime, MongoDB connectivity, and Node process status.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/ready:
+    get:
+      summary: Readiness probe
+      description: Kubernetes / Cloud container readiness verification.
+      responses:
+        '200':
+          description: Service ready to receive traffic
+        '503':
+          description: Database disconnected
+
+  /api/rooms:
+    post:
+      summary: Create a room
+      description: Creates a new collaborative room and assigns the creator as OWNER.
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '400':
+          description: Validation error
+
+  /api/rooms/{roomId}:
+    get:
+      summary: Get room details & authoritative state
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authoritative room state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '404':
+          description: Room not found
+
+  /api/rooms/{roomId}/join:
+    post:
+      summary: Join a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+      responses:
+        '200':
+          description: Joined room successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+
+  /api/rooms/{roomId}/leave:
+    post:
+      summary: Leave a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Left room successfully
+
+  /api/rooms/{roomId}/drafts:
+    post:
+      summary: Share a draft with room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareDraftRequest'
+      responses:
+        '200':
+          description: Draft shared
+
+  /api/rooms/{roomId}/spin/start:
+    post:
+      summary: Start the Spin Wheel
+      description: Initiates authoritative 5s elimination loop. Requires >= 3 eligible players and room owner role.
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Spin started
+        '400':
+          description: Insufficient players (< 3)
+        '403':
+          description: Only owner can start spin
+        '409':
+          description: Spin already active in this room
+
+  /api/spins/{spinId}:
+    get:
+      summary: Get spin state & survivor list
+      parameters:
+        - name: spinId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Spin snapshot
+
+  /api/spins/{spinId}/events:
+    get:
+      summary: Get auditable event log for a spin
+      parameters:
+        - name: spinId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ordered list of sequence events
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: UP
+        uptime:
+          type: number
+        database:
+          type: object
+          properties:
+            status:
+              type: string
+              example: CONNECTED
+
+    CreateRoomRequest:
+      type: object
+      required: [name, ownerId]
+      properties:
+        name:
+          type: string
+          example: Acoustic Studio Alpha
+        ownerId:
+          type: string
+          example: user_123
+        maxParticipants:
+          type: integer
+          default: 20
+
+    JoinRoomRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+          example: user_456
+        username:
+          type: string
+          example: VocalistJane
+
+    ShareDraftRequest:
+      type: object
+      required: [userId, draftId]
+      properties:
+        userId:
+          type: string
+        draftId:
+          type: string
+        title:
+          type: string
+        durationMs:
+          type: number
+        effectApplied:
+          type: string
+          enum: [NONE, ECHO, REVERB, PITCH_SHIFT]
+
+    RoomResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            ownerId:
+              type: string
+            status:
+              type: string
+            participants:
+              type: array
+              items:
+                type: object
